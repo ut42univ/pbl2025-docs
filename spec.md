@@ -17,31 +17,34 @@
 
 ```mermaid
 graph TD
-    subgraph 農場
-        A[温度センサー] --> C{Raspberry Pi};
-        B[土壌水分センサー] --> C;
-        D[窒素センサー] --> C;
+    subgraph PHY_LAYER ["物理層 (PBL実習室)"]
+        direction LR
+        Sensor1["温湿度センサー"] --> MCU1["Arduino Uno"];
+        Sensor2["土壌水分センサー"] --> MCU1;
+        Sensor3["窒素センサー"] --> MCU1;
     end
 
-    C -- データ送信 --> E[インターネット];
+    MCU1 -- "BLE 通信" --> MCU2;
 
-    subgraph クラウド/サーバー
-        E -- (HTTPS/MQTT) --> F[クラウドサーバー];
-        F -- 格納 --> G[(データベース)];
-        F -- リアルタイム処理 --> H[データ処理/診断エンジン];
+    subgraph GATEWAY ["ゲートウェイ層"]
+        MCU2["Raspberry Pi"];
     end
 
-    H -- 診断結果/通知命令 --> F;
-    F -- データ提供 (API) --> I[スマートフォン];
+    MCU2 -- "MQTT (Publish)" --> AWS_IoT["AWS IoT Core"];
 
-    subgraph ユーザー
-        I -- Webブラウザでアクセス --> J[Webアプリケーション];
-        J -- データ表示/通知 --> K(栽培者);
+    subgraph CLOUD ["クラウド層 (AWS)"]
+        AWS_IoT -- "トリガー" --> Lambda_Process["Lambda <br> (データ形式変換・保存)"];
+        Lambda_Process -- "整形済みデータ" --> DB["DynamoDB"];
+        Lambda_Process -- "診断要求" --> Lambda_Diagnose["Lambda <br> (診断エンジン)"];
+        Lambda_Diagnose -- "閾値判定・AI診断" --> DB;
+        Lambda_Diagnose -- "データ取得 (API)" <--> APIGateway["API Gateway"];
     end
 
-    style F fill:#f9f,stroke:#333,stroke-width:2px
-    style C fill:#ccf,stroke:#333,stroke-width:2px
-    style J fill:#9cf,stroke:#333,stroke-width:2px
+    subgraph APP_USER ["アプリケーション・ユーザー層"]
+        APIGateway -- "REST API (JSON)" --> WEB["Webアプリ <br> (React)"];
+        WEB -- "ダッシュボード・履歴表示" --> USER["ユーザ （スマホ/PC）"];
+    end
+
 ```
 
 ---
