@@ -18,7 +18,7 @@
 graph TD
     subgraph DEVICE ["デバイス層 (農場)"]
         direction LR
-        Sensor["環境センサ<br>温湿度・光センサ"] --> Arduino;
+        Sensor["環境センサ<br>温湿度・光センサ"] -- P2P(LoRa) --> RasPi["Raspberry Pi<br>データ集約"];
         Pot1["植木鉢3<br>土壌水分・窒素センサ"] --> Arduino["Arduino Uno<br>データ集約"];
         Pot2["植木鉢2<br>土壌水分・窒素センサ"] --> Arduino;
         Pot3["植木鉢1<br>土壌水分・窒素センサ"] --> Arduino;
