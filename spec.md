@@ -18,36 +18,41 @@
 graph TD
     subgraph DEVICE ["デバイス層 (農場)"]
         direction LR
-        Sensor["環境センサ<br>温湿度・光センサ"] -- P2P(LoRa) --> RasPi["Raspberry Pi<br>データ集約"];
-        Pot1["植木鉢3<br>土壌水分・窒素センサ"] --> Arduino["Arduino Uno<br>データ集約"];
+        Sensor["環境センサ<br>温湿度・光センサ"] -- P2P (LoRa) --> RasPi["Raspberry Pi<br>データ集約"];
+        Pot1["植木鉢1<br>土壌水分・窒素センサ"] --> Arduino["Arduino Uno<br>データ集約"];
         Pot2["植木鉢2<br>土壌水分・窒素センサ"] --> Arduino;
-        Pot3["植木鉢1<br>土壌水分・窒素センサ"] --> Arduino;
+        Pot3["植木鉢3<br>土壌水分・窒素センサ"] --> Arduino;
 
-        Arduino -- "P2P(BLE/LoRa)" --> RasPi["Raspberry Pi<br>ゲートウェイ"];
+        Arduino -- P2P (LoRa) --> RasPi["Raspberry Pi<br>ゲートウェイ"];
     end
 
     RasPi -- "MQTT" --> AWS_IoT["AWS IoT Core"];
 
     subgraph CLOUD ["クラウド層 (AWS)"]
-        AWS_IoT -- "トリガー" --> Lambda_Process["Lambda<br>(データ処理/保存)"];
+        AWS_IoT -- "イベントトリガー" --> Lambda_Process["Lambda<br>(データ整形/保存)"];
         Lambda_Process -- "データ保存" --> DB["DynamoDB"];
         Lambda_Process -- "診断を依頼" --> Lambda_Diagnose["Lambda<br>(状態診断)"];
         Lambda_Diagnose -- "データ読み込み" --> DB;
         Lambda_Diagnose -- "診断結果を保存" --> DB;
 
-        APIGateway["API Gateway"] -- "リクエストを転送" --> Lambda_API["Lambda<br>(LLM API・リクエスト処理)"];
+        APIGateway["API Gateway"] -- "リクエストを転送" --> Lambda_API["Lambda<br>(リクエスト処理)"];
         Lambda_API -- "データクエリ" --> DB;
     end
 
     subgraph LLM_LAYER ["LLM層 (文章生成)"]
         direction TB
         Lambda_API -- "LLM API 呼び出し" --> LLM_API;
-        LLM_API["LLM API<br>(OpenAI, etc.)"] -- "診断結果・メッセージ生成" --> Lambda_API;
+        LLM_API["生成AI API<br>(OpenAI, etc.)"] -- "診断結果・メッセージ生成" --> Lambda_API;
     end
 
-    subgraph APP_USER [アプリケーション・ユーザー層]
-        WEB["Webアプリ<br>(React)"] -- "データ取得<br>(REST API)" --> APIGateway;
-        WEB -- "ダッシュボード・診断結果表示・回答生成結果表示" --> USER["ユーザ<br>(スマホ/PC)"];
+    subgraph APP_LAYER ["クラウド層 (Vercel)"]
+        WEB["Webアプリ<br>(React/Next.js)"] -- "データ取得<br>(REST API)" --> APIGateway;
+    end
+
+    subgraph USER_LAYER ["ユーザ層"]
+        USER1["スマートフォン"] -- "ブラウザ" --> WEB;
+        USER2["PC"] -- "ブラウザ" --> WEB;
+
     end
 ```
 
