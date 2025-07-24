@@ -16,14 +16,14 @@
 
 ```mermaid
 graph TD
-    subgraph DEVICE ["デバイス層 (農場)"]
+    subgraph DEVICE ["デバイス層 (PBL室)"]
         direction LR
-        Sensor["環境センサ<br>温湿度・光センサ"] -- P2P (LoRa) --> RasPi["Raspberry Pi<br>データ集約"];
-        Pot1["植木鉢1<br>土壌水分・窒素センサ"] --> Arduino["Arduino Uno<br>データ集約"];
-        Pot2["植木鉢2<br>土壌水分・窒素センサ"] --> Arduino;
-        Pot3["植木鉢3<br>土壌水分・窒素センサ"] --> Arduino;
+        Pot1["トマト鉢<br>土壌水分センサ・自動水やり機"] --> Arduino["Arduino Uno<br>データ集約・水やり制御"];
+        Pot2["オクラ鉢<br>土壌水分センサ・自動水やり機"] --> Arduino;
+        Sensor["環境センサ<br>温湿度・光センサ"] --> Arduino;
 
-        Arduino -- P2P (LoRa) --> RasPi["Raspberry Pi<br>ゲートウェイ"];
+        Arduino -- 無線LAN(Wi-Fi) --> RasPi["Raspberry Pi<br>ゲートウェイ"];
+        Camera["ネットワークカメラ<br>植生記録・監視"]-- 無線LAN(Wi-Fi) --> RasPi;
     end
 
     RasPi -- "MQTT" --> AWS_IoT["AWS IoT Core"];
